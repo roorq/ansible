@@ -1,0 +1,64 @@
+---
+- hosts: all
+
+  vars:
+      CHANGELOG: $HOME/ansible_changelog
+      SQL: "{{ lookup('file', 'q1.sql') }}"
+
+  tasks:
+  - name: "create a directory changelog"
+    file: path={{CHANGELOG}} state=directory mode=0755
+    register: result
+  - name: "starting database task"
+    shell: |
+      #variable
+      DIR="{{CHANGELOG}}"
+      SQL="{{SQL}}"
+      DATE=`date '+%Y%m%d_%H%M%S'`
+      OS=`uname -a`
+      ORATAB_LIN=/etc/oratab
+      ORATAB_SUN=/var/opt/oracle/oratab
+
+      #check exist oratab 
+      if [ ! -f $ORATAB_LIN ] && [ ! -f $ORATAB_SUN ]; then
+      echo "File oratab NOT exist."
+      elif  [ -f $ORATAB_LIN ]; then
+      echo "File $ORATAB_LIN exist."
+      ORATAB=$ORATAB_LIN
+      elif  [ -f $ORATAB_SUN ]; then
+      echo "File $ORATAB_SUN exist."
+      ORATAB=$ORATAB_SUN  
+      fi
+      
+      #set oracle environment variables
+      ENV=`awk -F':' '!/^[ ]*(#|$)/ && $3=="N"{printf "ORAENV_ASK=NO ORACLE_SID=%s ORACLE_HOME=%s PATH=${PATH}:%s/bin\n",$1,$2,$2}' $ORATAB | egrep -v "ASM|\AGENT"`
+      echo "$ENV" | while read DB; do
+      export ""${DB}""
+
+      #query to database
+      sqlplus -s "/as sysdba" <<EOF
+      set feedback off
+      set heading off
+      SET SERVEROUTPUT ON SIZE 5000;
+      SET LINESIZE 2500;
+      set pagesize 5000;
+      set long 5000;
+      prompt 
+      prompt ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      prompt SID: ${ORACLE_SID}
+      prompt HOSTNAME: ${OS} 
+      prompt ORAENV: ${DB}
+      prompt ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      SPOOL ${DIR}/${ORACLE_SID}_${DATE}.csv
+      ${SQL}
+      SPOOL OFF
+      prompt ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      prompt
+      exit;
+      EOF
+      done
+    register: result
+    ignore_errors: true
+
+  - debug:
+      msg: "{{ result.stdout }}"
