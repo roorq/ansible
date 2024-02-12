@@ -1,0 +1,17 @@
+---
+- name: Patching and Updating Linux Systems
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Update Debian-based Systems
+      when: ansible_os_family == 'Debian'
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Update RHEL-based Systems
+      when: ansible_os_family == 'RedHat'
+      yum:
+        name: '*'
+        state: latest
