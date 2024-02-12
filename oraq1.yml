@@ -1,4 +1,5 @@
 ---
+- name: executing queries on oracle database based on oratab file
 - hosts: all
 
   vars:
