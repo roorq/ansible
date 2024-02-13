@@ -62,4 +62,4 @@
     ignore_errors: true
 
   - debug:
-      msg: "{{ result.stdout }}"
+      msg: "{{ result.stdout | join('\n') }}"
