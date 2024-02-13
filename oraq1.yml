@@ -10,9 +10,9 @@
   - name: "Create a directory changelog"
     file: path={{CHANGELOG}} state=directory mode=0755
     register: result
-  - name: "starting database task"
+  - name: "Starting database task..."
     shell: |
-      #variable
+      # Variable
       DIR="{{CHANGELOG}}"
       SQL="{{SQL}}"
       DATE=`date '+%Y%m%d_%H%M%S'`
@@ -20,7 +20,7 @@
       ORATAB_LIN=/etc/oratab
       ORATAB_SUN=/var/opt/oracle/oratab
 
-      # "Check exist oratab"
+      # Check exist oratab
       if [ ! -f $ORATAB_LIN ] && [ ! -f $ORATAB_SUN ]; then
       echo "File oratab NOT exist."
       elif  [ -f $ORATAB_LIN ]; then
@@ -31,12 +31,12 @@
       ORATAB=$ORATAB_SUN  
       fi
       
-      # "Set oracle environment variables"
+      # Set oracle environment variables
       ENV=`awk -F':' '!/^[ ]*(#|$)/ && $3=="N"{printf "ORAENV_ASK=NO ORACLE_SID=%s ORACLE_HOME=%s PATH=${PATH}:%s/bin\n",$1,$2,$2}' $ORATAB | egrep -v "ASM|\AGENT"`
       echo "$ENV" | while read DB; do
       export ""${DB}""
 
-      # "Query to database"
+      # Query to database
       sqlplus -s "/as sysdba" <<EOF
       set feedback off
       set heading off
