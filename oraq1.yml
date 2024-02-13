@@ -1,5 +1,5 @@
 ---
-- name: executing queries on oracle database based on oratab file
+- name: "Executing queries on oracle database based on oratab file"
 - hosts: all
 
   vars:
@@ -7,7 +7,7 @@
       SQL: "{{ lookup('file', 'q1.sql') }}"
 
   tasks:
-  - name: "create a directory changelog"
+  - name: "Create a directory changelog"
     file: path={{CHANGELOG}} state=directory mode=0755
     register: result
   - name: "starting database task"
@@ -20,7 +20,7 @@
       ORATAB_LIN=/etc/oratab
       ORATAB_SUN=/var/opt/oracle/oratab
 
-      #check exist oratab 
+      # "Check exist oratab"
       if [ ! -f $ORATAB_LIN ] && [ ! -f $ORATAB_SUN ]; then
       echo "File oratab NOT exist."
       elif  [ -f $ORATAB_LIN ]; then
@@ -31,12 +31,12 @@
       ORATAB=$ORATAB_SUN  
       fi
       
-      #set oracle environment variables
+      # "Set oracle environment variables"
       ENV=`awk -F':' '!/^[ ]*(#|$)/ && $3=="N"{printf "ORAENV_ASK=NO ORACLE_SID=%s ORACLE_HOME=%s PATH=${PATH}:%s/bin\n",$1,$2,$2}' $ORATAB | egrep -v "ASM|\AGENT"`
       echo "$ENV" | while read DB; do
       export ""${DB}""
 
-      #query to database
+      # "Query to database"
       sqlplus -s "/as sysdba" <<EOF
       set feedback off
       set heading off
@@ -44,6 +44,7 @@
       SET LINESIZE 2500;
       set pagesize 5000;
       set long 5000;
+      prompt
       prompt ********************************************************************************
       prompt SID: ${ORACLE_SID}
       prompt HOSTNAME: ${OS} 
@@ -53,6 +54,7 @@
       ${SQL}
       SPOOL OFF
       prompt *******************************************************************************
+      prompt
       exit;
       EOF
       done
